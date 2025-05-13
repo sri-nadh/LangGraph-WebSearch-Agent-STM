@@ -38,11 +38,13 @@ def chatbot(state: State)-> State:
     return {"messages": [response]}
 
 
-graph_builder.add_node("chatbot", chatbot)
-
+# Tavily Search Node
 tool_node = ToolNode(tools=[search_tool])
 
+
+graph_builder.add_node("chatbot", chatbot)
 graph_builder.add_node("tools", tool_node)
+
 
 graph_builder.add_conditional_edges(
     "chatbot",
