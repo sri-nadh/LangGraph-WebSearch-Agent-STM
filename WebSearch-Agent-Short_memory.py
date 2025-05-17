@@ -15,6 +15,7 @@ class State(TypedDict):
     messages: Annotated[list, add_messages]
 
 
+# in-memory temporory storage for a single long conv
 memory=MemorySaver()
 
 api_key= os.getenv("OPENAI-API-KEY")
@@ -58,6 +59,7 @@ graph_builder.set_entry_point("chatbot")
 graph = graph_builder.compile(checkpointer=memory)
 
 
+# Writing the memory to thread with id "1"
 config = {"configurable": {"thread_id": "1"}}
 
 
