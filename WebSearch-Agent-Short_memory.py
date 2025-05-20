@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Class for Stategraph to manage State across the graph nodes.
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
