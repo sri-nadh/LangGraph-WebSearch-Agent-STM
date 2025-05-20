@@ -63,6 +63,7 @@ graph = graph_builder.compile(checkpointer=memory)
 config = {"configurable": {"thread_id": "1"}}
 
 
+# Defining Loop to have a continuous conversation
 while True:
     user_input = input("User: ")
     if user_input.lower() in ["quit", "exit", "q"]:
