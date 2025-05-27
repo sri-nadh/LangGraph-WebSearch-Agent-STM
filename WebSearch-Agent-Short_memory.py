@@ -37,7 +37,7 @@ async def read_index():
         return f.read()
 
 
-
+# Request Schema for input validation
 class RequestSchema(BaseModel):
     message: str
 
@@ -73,31 +73,31 @@ def chatbot(state: State)-> State:
 # Tavily Search Node
 tool_node = ToolNode(tools=[search_tool])
 
-
 graph_builder.add_node("chatbot", chatbot)
 graph_builder.add_node("tools", tool_node)
-
 
 graph_builder.add_conditional_edges(
     "chatbot",
     tools_condition,
 )
 
-
 # Any time a tool is called, we return to the chatbot to decide the next step
 graph_builder.add_edge("tools", "chatbot")
+
 graph_builder.set_entry_point("chatbot")
 
 graph = graph_builder.compile(checkpointer=memory)
 
 Thread_Id = "First_Thread"
 
-# Writing the memory to thread with id "1"
+# Writing the memory to thread with id "First_Thread"
 config = {"configurable": {"thread_id": Thread_Id}}
 
+# Place holder for terminated threads
 terminated_threads : set[str] = set()
 
 
+# Web Search Agent endpoint
 @app.post("/websearch-agent/", response_class= JSONResponse)
 async def WebSearch_Agent(request : RequestSchema):
     
@@ -114,8 +114,7 @@ async def WebSearch_Agent(request : RequestSchema):
         terminated_threads.add(Thread_Id)
         return JSONResponse(content="Ok bye, it was nice chatting with you. Have a good rest of the day!")
         
-
-    # Process user input through the LangGraph
+        
     for event in graph.stream({"messages": [("user", user_message)]}, config):
         for value in event.values():
             return JSONResponse(content={"response" : value["messages"][-1].content})
