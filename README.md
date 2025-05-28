@@ -106,7 +106,6 @@ Agent: [Uses conversation context to provide details about previously mentioned 
 
 - `GET /` - Serves the web interface
 - `POST /websearch-agent/` - Chat endpoint for agent interactions
-- `GET /health` - Health check endpoint
 
 ## 🎨 Features Showcase
 
@@ -125,6 +124,20 @@ The application is ready for deployment on platforms like:
 - Railway
 - DigitalOcean App Platform
 - Any Docker-compatible platform
+
+## 💡 Technical Details
+
+### Architecture
+- **State Management**: Uses LangGraph's StateGraph for conversation flow
+- **Memory**: MemorySaver provides short-term memory for conversation context
+- **Tool Integration**: Seamless integration with Tavily Search for web queries
+- **Error Handling**: Robust error handling with graceful fallbacks
+
+### Key Components
+- **Chatbot Node**: Processes user messages and determines when to use tools
+- **Tool Node**: Handles web search operations via Tavily
+- **State Graph**: Manages conversation flow and tool routing
+- **FastAPI Server**: Provides HTTP endpoints and serves the web interface
 
 ## 🤝 Contributing
 
