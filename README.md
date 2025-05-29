@@ -1,20 +1,22 @@
 # 🔍 WebSearch Agent with Short-Term Memory
 
-A modern, LangGraph-powered autonomous agent with web search capabilities, featuring a beautiful web interface and memory for conversational context.
+A modern, LangGraph-powered autonomous agent with web search capabilities, featuring a beautiful web interface, dynamic session management, and isolated conversation memory.
 
 ## 🚀 Overview
 
-This project demonstrates how to build a sophisticated web search agent using [LangGraph](https://github.com/langchain-ai/langgraph) with a FastAPI backend and modern web frontend. The agent maintains conversational memory and provides an intuitive chat interface for real-time web searches.
+This project demonstrates how to build a sophisticated web search agent using [LangGraph](https://github.com/langchain-ai/langgraph) with a FastAPI backend and modern web frontend. The agent maintains conversational memory through dynamic session management, ensuring each conversation is completely isolated with its own memory context.
 
 ## 🧠 Features
 
 * ✅ **Modern Web Interface**: Beautiful, responsive chat UI with real-time interactions
+* ✅ **Dynamic Session Management**: Automatic thread ID generation for isolated conversations
 * ✅ **Web Search Integration**: Uses Tavily Search for real-time web information retrieval
-* ✅ **Short-Term Memory**: Maintains conversational context across interactions
+* ✅ **Isolated Memory**: Each session maintains separate conversational context
 * ✅ **LangGraph Integration**: State-based agent architecture with tool routing
 * ✅ **FastAPI Backend**: RESTful API with proper error handling and validation
 * ✅ **Real-time Feedback**: Typing indicators and smooth message animations
-* ✅ **Session Management**: Proper conversation threading and termination handling
+* ✅ **Session Control**: Fresh sessions on page refresh or manual chat clearing
+* ✅ **Multi-Tab Support**: Different browser tabs maintain separate conversations
 
 ## 🧱 Built With
 
@@ -86,11 +88,14 @@ http://localhost:8000
 
 ## 🖥️ Usage
 
-1. **Start a Conversation**: Type your question in the chat input
+1. **Automatic Session**: Each page load automatically creates a new conversation session
 2. **Web Search Queries**: Ask about current events, recent information, or any topic requiring web search
-3. **Conversational Context**: The agent remembers previous messages in the conversation
-4. **Session Management**: Type "quit", "exit", or "bye" to end the session
-5. **Clear Chat**: Use the clear button to reset the conversation
+3. **Conversational Context**: The agent remembers previous messages within the same session
+4. **Session Management**: 
+   - Type "quit", "exit", or "bye" to end the current session
+   - Click "Clear" button to start a fresh session
+   - Refresh the page for a completely new conversation
+5. **Multi-Tab Support**: Open multiple tabs for parallel conversations
 
 ### Example Interactions
 
@@ -100,48 +105,41 @@ Agent: [Searches web and provides current information about AI developments]
 
 User: Tell me more about the companies mentioned
 Agent: [Uses conversation context to provide details about previously mentioned companies]
+
+User: [Clicks Clear button - starts fresh session with no memory of previous conversation]
 ```
 
-## 🔧 API Endpoints
-
-- `GET /` - Serves the web interface
-- `POST /websearch-agent/` - Chat endpoint for agent interactions
-
-## 🎨 Features Showcase
-
-- **Beautiful UI**: Modern gradient design with smooth animations
-- **Responsive**: Works perfectly on desktop and mobile devices
-- **Real-time Feedback**: Typing indicators and loading states
-- **Error Handling**: Graceful error messages and recovery
-- **Session Management**: Proper conversation threading
-- **Accessibility**: Keyboard shortcuts and focus management
-
-## 🚀 Deployment
-
-The application is ready for deployment on platforms like:
-- Heroku
-- Vercel
-- Railway
-- DigitalOcean App Platform
-- Any Docker-compatible platform
-
-## 💡 Technical Details
-
-### Architecture
-- **State Management**: Uses LangGraph's StateGraph for conversation flow
-- **Memory**: MemorySaver provides short-term memory for conversation context
-- **Tool Integration**: Seamless integration with Tavily Search for web queries
-- **Error Handling**: Robust error handling with graceful fallbacks
 
 ### Key Components
+- **Session Generator**: Creates unique thread IDs for conversation isolation
 - **Chatbot Node**: Processes user messages and determines when to use tools
 - **Tool Node**: Handles web search operations via Tavily
-- **State Graph**: Manages conversation flow and tool routing
+- **State Graph**: Manages conversation flow and tool routing with thread-specific memory
 - **FastAPI Server**: Provides HTTP endpoints and serves the web interface
+- **Frontend Session Manager**: Handles session creation, management, and cleanup
+
+### Memory Management
+- **Isolated Conversations**: Each thread ID maintains separate conversation history
+- **Automatic Cleanup**: Old sessions naturally expire without manual intervention
+- **Multi-Tab Support**: Different browser tabs/windows maintain independent sessions
+- **Session Recovery**: Automatic session creation if current session becomes invalid
+
+## 🔄 Session Flow Example
+
+1. **User opens page** → Frontend calls `/new-session/`
+2. **Backend generates** → `thread_20241215_143022_a7b3c4d5`
+3. **User sends message** → `{"message": "Hello", "thread_id": "thread_20241215_143022_a7b3c4d5"}`
+4. **Backend processes** → Uses thread-specific memory context
+5. **User clears chat** → Frontend creates new session with different thread ID
+6. **Fresh conversation** → No memory of previous interactions
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. Areas for potential improvement:
+- Session persistence across browser sessions
+- Conversation export/import functionality
+- Enhanced memory management options
+- Additional search providers
 
 ## 📄 License
 
