@@ -15,6 +15,8 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
 import logging
+import uuid
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,10 +52,16 @@ async def read_index():
 # Request Schema for input validation
 class RequestSchema(BaseModel):
     message: str
+    thread_id: str
 
 # Response Schema
 class ResponseSchema(BaseModel):
     response: str
+    status: str = "success"
+
+# New Session Response Schema
+class NewSessionResponse(BaseModel):
+    thread_id: str
     status: str = "success"
 
 # state management for state graph
@@ -78,6 +86,7 @@ llm_with_tools = llm.bind_tools(tools)
 # Chatbot node
 def chatbot(state: State) -> State:
     try:
+        
         system_message = """
 You are a helpful AI assistant with access to real-time web data via the [TavilySearch] tool. Use it effectively by following these principles:
 
@@ -127,11 +136,27 @@ graph_builder.set_entry_point("chatbot")
 
 graph = graph_builder.compile(checkpointer=memory)
 
-
-# Thread management 
-Thread_Id = "First_Thread"
-config = {"configurable": {"thread_id": Thread_Id}}
+# Thread management with dynamic IDs
 terminated_threads: set[str] = set()
+
+def generate_thread_id():
+    """Generate a unique thread ID"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = str(uuid.uuid4())[:8]
+    return f"thread_{timestamp}_{unique_id}"
+
+
+# New session endpoint
+@app.post("/new-session/", response_model=NewSessionResponse)
+async def create_new_session():
+    """Create a new session with a unique thread ID"""
+    try:
+        new_thread_id = generate_thread_id()
+        logger.info(f"Created new session with thread ID: {new_thread_id}")
+        return NewSessionResponse(thread_id=new_thread_id, status="success")
+    except Exception as e:
+        logger.error(f"Error creating new session: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create new session")
 
 
 # WebSearch Agent endpoint
@@ -139,36 +164,34 @@ terminated_threads: set[str] = set()
 async def websearch_agent(request: RequestSchema):
     try:
         user_message = request.message.strip()
+        thread_id = request.thread_id
 
         if not user_message:
             raise HTTPException(status_code=400, detail="Empty message is not allowed")
 
-        if Thread_Id in terminated_threads:
+        if not thread_id:
+            raise HTTPException(status_code=400, detail="Thread ID is required")
+
+        if thread_id in terminated_threads:
             return ResponseSchema(
                 response="This session has ended. Please refresh or start a new session to chat again.",
                 status="session_ended"
             )
         
         if user_message.lower() in ["quit", "exit", "bye"]:
-            terminated_threads.add(Thread_Id)
+            terminated_threads.add(thread_id)
             return ResponseSchema(
                 response="Ok bye, it was nice chatting with you. Have a good rest of the day!",
                 status="session_ended"
             )
         
-        # Process the message through the graph
-        for event in graph.stream({"messages": [("user", user_message)]}, config):
-            for value in event.values():
-                return ResponseSchema(
-                    response=value["messages"][-1].content,
-                    status="success"
-                )
+        # Create config with the dynamic thread ID
+        config = {"configurable": {"thread_id": thread_id}}
         
-        # Fallback response if no events are generated
-        return ResponseSchema(
-            response="I apologize, but I couldn't process your request at this time.",
-            status="error"
-        )
+        # Process the message through the graph
+        result = graph.invoke({"messages": [("user", user_message)]}, config)
+        response = result["messages"][-1].content
+        return ResponseSchema(response=response, status="success")
         
     except Exception as e:
         logger.error(f"Error in websearch_agent: {e}")

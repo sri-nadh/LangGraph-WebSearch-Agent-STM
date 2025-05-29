@@ -137,6 +137,7 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             position: relative;
             word-wrap: break-word;
+            line-height: 1.6;
         }
 
         .message.user .message-content {
@@ -147,6 +148,63 @@
         .message.bot .message-content {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
+        }
+
+        /* Formatting styles for bot messages */
+        .message.bot .message-content p {
+            margin: 0 0 12px 0;
+        }
+
+        .message.bot .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message.bot .message-content strong {
+            font-weight: 600;
+            color: #4f46e5;
+        }
+
+        .message.bot .message-content em {
+            font-style: italic;
+            color: #6b7280;
+        }
+
+        .message.bot .message-content .list-item {
+            display: flex;
+            align-items: flex-start;
+            margin: 8px 0;
+            padding-left: 0;
+            width: 100%;
+        }
+
+        .message.bot .message-content .list-number {
+            font-weight: 600;
+            color: #4f46e5;
+            margin-right: 12px;
+            min-width: 28px;
+            flex-shrink: 0;
+        }
+
+        .message.bot .message-content .bullet {
+            font-weight: 600;
+            color: #4f46e5;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .message.bot .message-content .list-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-right: 4px;
+        }
+
+        .message.bot .message-content .list-content {
+            flex: 1;
+            word-wrap: break-word;
+        }
+
+        .message.bot .message-content .list-item:last-child {
+            margin-bottom: 0;
         }
 
         .typing-indicator {
@@ -272,6 +330,30 @@
             margin: 40px 0;
         }
 
+        .help-tip {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 20px auto 0;
+            max-width: 400px;
+            font-style: normal;
+            font-size: 14px;
+            color: #0369a1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .help-tip i {
+            color: #0ea5e9;
+            font-size: 16px;
+        }
+
+        .help-tip strong {
+            color: #0c4a6e;
+        }
+
         .error-message {
             background: #fef2f2;
             border: 1px solid #fecaca;
@@ -342,6 +424,11 @@
                 <i class="fas fa-robot" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
                 Welcome! I'm your AI assistant with web search capabilities.<br>
                 Ask me anything, and I'll search the web for the latest information to help you!
+                
+                <div class="help-tip">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Tip:</strong> Type "quit", "exit", or "bye" to end the conversation
+                </div>
             </div>
         </div>
 
@@ -351,7 +438,7 @@
                     <textarea 
                         class="chat-input" 
                         id="messageInput" 
-                        placeholder="Ask me anything... I can search the web for current information!"
+                        placeholder="Ask me anything... i am a websearch agent"
                         rows="1"
                         maxlength="1000"
                     ></textarea>
@@ -373,6 +460,9 @@
         const sendButton = document.getElementById('sendButton');
         const clearButton = document.getElementById('clearButton');
         const chatForm = document.getElementById('chatForm');
+
+        // Session management
+        let currentThreadId = null;
 
         // Auto-resize textarea
         messageInput.addEventListener('input', function() {
@@ -396,10 +486,57 @@
 
         // Clear chat handler
         clearButton.addEventListener('click', function() {
-            if (confirm('Are you sure you want to clear the chat history?')) {
-                clearChat();
+            if (confirm('Are you sure you want to clear the chat history? This will start a new session.')) {
+                startNewSession();
             }
         });
+
+        async function startNewSession() {
+            try {
+                const response = await fetch('/new-session/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                currentThreadId = data.thread_id;
+                console.log('New session started with thread ID:', currentThreadId);
+                
+                // Clear the chat interface
+                clearChatInterface();
+                
+            } catch (error) {
+                console.error('Error starting new session:', error);
+                showError('Failed to start new session. Please refresh the page.');
+            }
+        }
+
+        function clearChatInterface() {
+            // Remove all messages except welcome
+            const messages = chatMessages.querySelectorAll('.message, .error-message');
+            messages.forEach(msg => msg.remove());
+            
+            // Add welcome message back
+            const welcomeDiv = document.createElement('div');
+            welcomeDiv.className = 'welcome-message';
+            welcomeDiv.innerHTML = `
+                <i class="fas fa-robot" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                Welcome! I'm your AI assistant with web search capabilities.<br>
+                Ask me anything, and I'll search the web for the latest information to help you!
+                
+                <div class="help-tip">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Tip:</strong> Type "quit", "exit", or "bye" to end the conversation
+                </div>
+            `;
+            chatMessages.appendChild(welcomeDiv);
+        }
 
         function addMessage(content, isUser = false) {
             const messageDiv = document.createElement('div');
@@ -411,7 +548,14 @@
             
             const messageContent = document.createElement('div');
             messageContent.className = 'message-content';
-            messageContent.textContent = content;
+            
+            if (isUser) {
+                // For user messages, keep as plain text
+                messageContent.textContent = content;
+            } else {
+                // For bot messages, format the content properly
+                messageContent.innerHTML = formatBotMessage(content);
+            }
             
             messageDiv.appendChild(avatar);
             messageDiv.appendChild(messageContent);
@@ -424,6 +568,74 @@
             
             chatMessages.appendChild(messageDiv);
             scrollToBottom();
+        }
+
+        function formatBotMessage(content) {
+            // Escape HTML first to prevent XSS
+            const escapeHtml = (unsafe) => {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            };
+            
+            let formatted = escapeHtml(content);
+            
+            // Split into lines for better processing
+            let lines = formatted.split('\n');
+            let processedLines = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                
+                if (line === '') {
+                    processedLines.push('<br>');
+                    continue;
+                }
+                
+                // Check if line starts with a number followed by period
+                if (/^\d+\.\s/.test(line)) {
+                    // Handle numbered list items
+                    const match = line.match(/^(\d+)\.\s(.*)$/);
+                    if (match) {
+                        const number = match[1];
+                        let content = match[2];
+                        
+                        // Check if the content contains bold text
+                        if (content.includes('**')) {
+                            content = content.replace(/\*\*([^*]+)\*\*:\s?/g, '<span class="list-title">$1:</span> ');
+                            content = content.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                        }
+                        
+                        processedLines.push(`<div class="list-item"><span class="list-number">${number}.</span><span class="list-content">${content}</span></div>`);
+                    }
+                }
+                // Check if line starts with bullet points
+                else if (/^[•·-]\s/.test(line)) {
+                    const content = line.replace(/^[•·-]\s/, '').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                    processedLines.push(`<div class="list-item"><span class="bullet">•</span><span class="list-content">${content}</span></div>`);
+                }
+                // Regular paragraph text
+                else {
+                    // Handle bold and italic text in regular paragraphs
+                    line = line.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                    line = line.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+                    processedLines.push(`<p>${line}</p>`);
+                }
+            }
+            
+            // Join all processed lines
+            formatted = processedLines.join('');
+            
+            // Clean up multiple consecutive <br> tags
+            formatted = formatted.replace(/(<br>\s*){3,}/g, '<br><br>');
+            
+            // Clean up empty paragraphs
+            formatted = formatted.replace(/<p><\/p>/g, '');
+            
+            return formatted;
         }
 
         function showTypingIndicator() {
@@ -495,6 +707,12 @@
             const message = messageInput.value.trim();
             if (!message) return;
 
+            if (!currentThreadId) {
+                showError('No active session. Starting new session...');
+                await startNewSession();
+                if (!currentThreadId) return;
+            }
+
             // Add user message
             addMessage(message, true);
             messageInput.value = '';
@@ -508,7 +726,10 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ 
+                        message: message,
+                        thread_id: currentThreadId
+                    })
                 });
 
                 if (!response.ok) {
@@ -520,8 +741,8 @@
                 if (data.status === 'session_ended') {
                     addMessage(data.response, false);
                     setTimeout(() => {
-                        if (confirm('Session ended. Would you like to refresh the page to start a new conversation?')) {
-                            location.reload();
+                        if (confirm('Session ended. Would you like to start a new session?')) {
+                            startNewSession();
                         }
                     }, 1000);
                 } else {
@@ -538,23 +759,12 @@
         }
 
         function clearChat() {
-            // Remove all messages except welcome
-            const messages = chatMessages.querySelectorAll('.message, .error-message');
-            messages.forEach(msg => msg.remove());
-            
-            // Add welcome message back
-            const welcomeDiv = document.createElement('div');
-            welcomeDiv.className = 'welcome-message';
-            welcomeDiv.innerHTML = `
-                <i class="fas fa-robot" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-                Welcome! I'm your AI assistant with web search capabilities.<br>
-                Ask me anything, and I'll search the web for the latest information to help you!
-            `;
-            chatMessages.appendChild(welcomeDiv);
+            startNewSession();
         }
 
-        // Focus on input when page loads
+        // Initialize session when page loads
         window.addEventListener('load', function() {
+            startNewSession();
             messageInput.focus();
         });
 
@@ -563,6 +773,11 @@
             if (!document.hidden) {
                 messageInput.focus();
             }
+        });
+
+        // Handle page refresh/beforeunload
+        window.addEventListener('beforeunload', function() {
+            // Session will naturally expire, no cleanup needed
         });
     </script>
 </body>
