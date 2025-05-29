@@ -119,6 +119,7 @@ Only use [TavilySearch] when necessary—prioritize efficiency, accuracy, and tr
         
         return {"messages": [error_response]}
 
+
 # Tool node
 tool_node = ToolNode(tools=[search_tool])
 
@@ -140,7 +141,6 @@ graph = graph_builder.compile(checkpointer=memory)
 terminated_threads: set[str] = set()
 
 def generate_thread_id():
-    """Generate a unique thread ID"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     unique_id = str(uuid.uuid4())[:8]
     return f"thread_{timestamp}_{unique_id}"
@@ -188,7 +188,7 @@ async def websearch_agent(request: RequestSchema):
         # Create config with the dynamic thread ID
         config = {"configurable": {"thread_id": thread_id}}
         
-        # Process the message through the graph
+        # calling the graph
         result = graph.invoke({"messages": [("user", user_message)]}, config)
         response = result["messages"][-1].content
         return ResponseSchema(response=response, status="success")
