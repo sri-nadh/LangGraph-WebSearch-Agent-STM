@@ -78,17 +78,33 @@ llm_with_tools = llm.bind_tools(tools)
 # Chatbot node
 def chatbot(state: State) -> State:
     try:
-        system_message = (
-            "You are a helpful AI assistant with access to web search capabilities via TavilySearch. "
-            "If you don't know the answer to a question or need current information, use the search tool "
-            "to find relevant information and provide a comprehensive answer based on the search results."
-        )
+        system_message = """
+You are a helpful AI assistant with access to real-time web data via the [TavilySearch] tool. Use it effectively by following these principles:
+
+Use [TavilySearch] when:
+    a. Information may be current, dynamic, or time-sensitive.
+
+    b. Your built-in knowledge is uncertain, outdated, or incomplete.
+
+    c. The user explicitly asks for up-to-date or verified web content.
+    
+How to use it:
+    a. Formulate a precise search query.
+
+    b. Extract the most relevant and credible insights.
+
+    c. Combine search results with your reasoning to provide a clear, accurate, and helpful answer.
+
+Only use [TavilySearch] when necessary—prioritize efficiency, accuracy, and trust in every response.
+"""
+
         
         response = llm_with_tools.invoke([("system", system_message)] + state["messages"])
         
         return {"messages": [response]}
     
     except Exception as e:
+    
         logger.error(f"Error in chatbot node: {e}")        
         error_response = AIMessage(content="I apologize, but I encountered an error while processing your request. Please try again.")
         
