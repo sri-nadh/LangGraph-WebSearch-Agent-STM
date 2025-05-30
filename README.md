@@ -29,10 +29,13 @@ This project demonstrates how to build a sophisticated web search agent using [L
 ## 📁 Project Structure
 
 ```
-├── WebSearch-Agent-Short_memory.py  # FastAPI backend with LangGraph agent
+├── main.py                          # FastAPI application and routes
+├── agent.py                         # LangGraph agent logic and session management
+├── models.py                        # Pydantic models, schemas, and configuration
 ├── Static/
 │   └── index.html                   # Modern web interface
 ├── requirements.txt                 # Python dependencies
+├── __init__.py                      # Package initialization
 └── README.md                       # This file
 ```
 
@@ -70,13 +73,13 @@ TAVILY_API_KEY=your_tavily_api_key_here
 ### 4. Run the Application
 
 ```bash
-python WebSearch-Agent-Short_memory.py
+python main.py
 ```
 
 Or using uvicorn directly:
 
 ```bash
-uvicorn WebSearch-Agent-Short_memory:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### 5. Access the Web Interface
@@ -111,11 +114,20 @@ User: [Clicks Clear button - starts fresh session with no memory of previous con
 
 
 ### Key Components
+
+#### **File Structure & Responsibilities:**
+- **`main.py`**: FastAPI application, HTTP routes, and server configuration
+- **`agent.py`**: WebSearchAgent class with LangGraph logic and session management
+- **`models.py`**: Pydantic schemas, TypedDict definitions, and utility functions
+- **`Static/index.html`**: Frontend interface with session management
+
+#### **Core Components:**
 - **Session Generator**: Creates unique thread IDs for conversation isolation
+- **WebSearchAgent Class**: Encapsulates chatbot node, tool node, and graph management
 - **Chatbot Node**: Processes user messages and determines when to use tools
 - **Tool Node**: Handles web search operations via Tavily
 - **State Graph**: Manages conversation flow and tool routing with thread-specific memory
-- **FastAPI Server**: Provides HTTP endpoints and serves the web interface
+- **FastAPI Routes**: Provides HTTP endpoints and serves the web interface
 - **Frontend Session Manager**: Handles session creation, management, and cleanup
 
 ### Memory Management
