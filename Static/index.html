@@ -420,16 +420,7 @@
         </div>
 
         <div class="chat-messages" id="chatMessages">
-            <div class="welcome-message">
-                <i class="fas fa-robot" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-                Welcome! I'm your AI assistant with web search capabilities.<br>
-                Ask me anything, and I'll search the web for the latest information to help you!
-                
-                <div class="help-tip">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Tip:</strong> Type "quit", "exit", or "bye" to end the conversation
-                </div>
-            </div>
+            <!-- Welcome message will be added dynamically -->
         </div>
 
         <div class="chat-input-container">
@@ -518,8 +509,8 @@
         }
 
         function clearChatInterface() {
-            // Remove all messages except welcome
-            const messages = chatMessages.querySelectorAll('.message, .error-message');
+            // Remove all messages and welcome messages
+            const messages = chatMessages.querySelectorAll('.message, .error-message, .welcome-message');
             messages.forEach(msg => msg.remove());
             
             // Add welcome message back
